@@ -6,6 +6,7 @@ export default function useBackend() {
     var myHeaders = new Headers();
     myHeaders.append("Authorization", `Bearer ${accessToken}`);
     myHeaders.append("Accept", "application/json");
+    myHeaders.append("Content-Type", "application/json");
 
     var requestOptions = {
       method: method,
@@ -16,7 +17,7 @@ export default function useBackend() {
 
     //add body only for those methods that allow it
     if (!noBodyMethods.includes(method.toUpperCase())) {
-      requestOptions.body = body;
+      requestOptions.body = JSON.stringify(body);
     }
 
     return fetch(`${backendUrl}/${url}`, requestOptions)

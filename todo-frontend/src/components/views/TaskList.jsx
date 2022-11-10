@@ -3,7 +3,7 @@ import { Input, Button, Checkbox, List, Col, Row, Space, Divider } from "antd";
 import produce from "immer";
 import { useEffect } from "react";
 import { useState } from "react";
-import { taskFromServer } from "../../DTO/Task";
+import { taskFromServer, taskToServer } from "../../DTO/Task";
 import useBackend from "../hooks/useBackend";
 
 export default function TaskList() {
@@ -20,21 +20,22 @@ export default function TaskList() {
   }, []);
 
   const handleNameChange = (task, event) => {
-    console.log(event);
     const newTasks = produce(tasks, (draft) => {
       const index = draft.findIndex((t) => t.id === task.id);
       draft[index].name = event.target.value;
     });
     setTasks(newTasks);
+    saveTask(newTasks.find((t) => t.id === task.id));
   };
 
   const handleCompletedChange = (task, event) => {
-    console.log(event);
     const newTasks = produce(tasks, (draft) => {
       const index = draft.findIndex((t) => t.id === task.id);
       draft[index].completed = event.target.checked;
     });
     setTasks(newTasks);
+    //find changed task from the newTasks and save to backend
+    saveTask(newTasks.find((t) => t.id === task.id));
   };
 
   const handleAddTask = () => {
@@ -47,6 +48,7 @@ export default function TaskList() {
         });
       })
     );
+    sendReq("tasks", "POST", { title: "Task" });
   };
 
   const handleDeleteTask = (task) => {
@@ -56,8 +58,16 @@ export default function TaskList() {
         draft.splice(index, 1);
       })
     );
+    sendReq(`tasks/${task.id}`, "DELETE");
   };
 
+  const saveTask = (task) => {
+    if (!task.id) {
+      sendReq(`tasks/${task.id}`, "POST", taskToServer(task));
+    } else {
+      sendReq(`tasks/${task.id}`, "PUT", taskToServer(task));
+    }
+  };
   return (
     <Row
       type="flex"
