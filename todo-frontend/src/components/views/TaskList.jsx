@@ -4,32 +4,19 @@ import produce from "immer";
 import { useEffect } from "react";
 import { useState } from "react";
 import { taskFromServer } from "../../DTO/Task";
+import useBackend from "../hooks/useBackend";
 
 export default function TaskList() {
+  const { sendReq } = useBackend();
   const [tasks, setTasks] = useState([
     { id: 1, name: "Task 1", completed: false },
     { id: 2, name: "Task 2", completed: true },
   ]);
 
   useEffect(() => {
-    //get my tasks, request pasted from postman
-    var myHeaders = new Headers();
-    myHeaders.append(
-      "Authorization",
-      "Bearer fh-23k1Yxho7yVDQb3_CQODspoevhQFE"
+    sendReq("tasks", "GET").then((result) =>
+      setTasks(result.map(taskFromServer))
     );
-    myHeaders.append("Content-Type", "application/json");
-
-    var requestOptions = {
-      method: "GET",
-      headers: myHeaders,
-      redirect: "follow",
-    };
-
-    fetch("http://demo2.z-bit.ee/tasks", requestOptions)
-      .then((response) => response.json())
-      .then((result) => setTasks(result.map(taskFromServer)))
-      .catch((error) => console.log("error", error));
   }, []);
 
   const handleNameChange = (task, event) => {
