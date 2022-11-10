@@ -1,10 +1,10 @@
 import { DeleteOutlined } from "@ant-design/icons";
 import { Input, Button, Checkbox, List, Col, Row, Space, Divider } from "antd";
 import produce from "immer";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { taskFromServer, taskToServer } from "../../DTO/Task";
 import useBackend from "../hooks/useBackend";
+import { DebounceInput } from "react-debounce-input";
 
 export default function TaskList() {
   const { sendReq } = useBackend();
@@ -25,6 +25,7 @@ export default function TaskList() {
       draft[index].name = event.target.value;
     });
     setTasks(newTasks);
+    //TODO debounce
     saveTask(newTasks.find((t) => t.id === task.id));
   };
 
@@ -68,6 +69,7 @@ export default function TaskList() {
       sendReq(`tasks/${task.id}`, "PUT", taskToServer(task));
     }
   };
+
   return (
     <Row
       type="flex"
@@ -95,8 +97,10 @@ export default function TaskList() {
                     checked={task.completed}
                     onChange={(e) => handleCompletedChange(task, e)}
                   />
-                  <Input
+                  <DebounceInput
+                    className="deb-input"
                     value={task.name}
+                    debounceTimeout={500}
                     onChange={(event) => handleNameChange(task, event)}
                   />
                 </Space>
