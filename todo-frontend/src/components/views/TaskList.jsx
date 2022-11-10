@@ -3,6 +3,7 @@ import { Input, Button, Checkbox, List, Col, Row, Space, Divider } from "antd";
 import produce from "immer";
 import { useEffect } from "react";
 import { useState } from "react";
+import { taskFromServer } from "../../DTO/Task";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState([
@@ -11,7 +12,24 @@ export default function TaskList() {
   ]);
 
   useEffect(() => {
-    fetch("http://demo2.z-bit.ee/tasks").then(setTasks);
+    //get my tasks, request pasted from postman
+    var myHeaders = new Headers();
+    myHeaders.append(
+      "Authorization",
+      "Bearer fh-23k1Yxho7yVDQb3_CQODspoevhQFE"
+    );
+    myHeaders.append("Content-Type", "application/json");
+
+    var requestOptions = {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow",
+    };
+
+    fetch("http://demo2.z-bit.ee/tasks", requestOptions)
+      .then((response) => response.json())
+      .then((result) => setTasks(result.map(taskFromServer)))
+      .catch((error) => console.log("error", error));
   }, []);
 
   const handleNameChange = (task, event) => {
