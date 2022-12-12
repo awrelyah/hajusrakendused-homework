@@ -1,23 +1,32 @@
 import { DeleteOutlined } from "@ant-design/icons";
 import { Input, Button, Checkbox, List, Col, Row, Space, Divider } from "antd";
 import produce from "immer";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { taskFromServer, taskToServer } from "../../DTO/Task";
 import useBackend from "../hooks/useBackend";
 import { DebounceInput } from "react-debounce-input";
+import debounce from 'lodash.debounce';
 
 export default function TaskList() {
   const { sendReq } = useBackend();
-  const [tasks, setTasks] = useState([
-    { id: 1, name: "Task 1", completed: false },
-    { id: 2, name: "Task 2", completed: true },
-  ]);
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    sendReq("tasks", "GET").then((result) =>
-      setTasks(result.map(taskFromServer))
-    );
+    sendReq("tasks", "GET").then((result) => {
+      if (result.length) {
+        setTasks(result.map(taskFromServer));
+      } else {
+        setTasks([]);
+      }
+    });
   }, []);
+
+  const debouncedSaveTask = useCallback(
+    debounce((task) => {
+      sendReq("tasks/" + task.id, "PUT", taskToServer(task));
+    }, 1000),
+    [sendReq]
+  );
 
   const handleNameChange = (task, event) => {
     const newTasks = produce(tasks, (draft) => {
@@ -25,8 +34,10 @@ export default function TaskList() {
       draft[index].name = event.target.value;
     });
     setTasks(newTasks);
-    //TODO debounce
-    saveTask(newTasks.find((t) => t.id === task.id));
+    let newTask = newTasks.find(newTask => newTask.id == task.id);
+
+    debouncedSaveTask(newTask);
+    //saveTask(newTasks.find((t) => t.id === task.id));
   };
 
   const handleCompletedChange = (task, event) => {
@@ -35,15 +46,17 @@ export default function TaskList() {
       draft[index].completed = event.target.checked;
     });
     setTasks(newTasks);
+    let newTask = newTasks.find(newTask => newTask.id == task.id);
+    debouncedSaveTask(newTask);
     //find changed task from the newTasks and save to backend
-    saveTask(newTasks.find((t) => t.id === task.id));
+    //saveTask(newTasks.find((t) => t.id === task.id));
   };
 
   const handleAddTask = () => {
     setTasks(
       produce(tasks, (draft) => {
         draft.push({
-          id: Math.random(),
+          id: Math.floor(Math.random() * 9999),
           name: "",
           completed: false,
         });
@@ -62,6 +75,7 @@ export default function TaskList() {
     sendReq(`tasks/${task.id}`, "DELETE");
   };
 
+  /*
   const saveTask = (task) => {
     if (!task.id) {
       sendReq(`tasks/${task.id}`, "POST", taskToServer(task));
@@ -69,6 +83,7 @@ export default function TaskList() {
       sendReq(`tasks/${task.id}`, "PUT", taskToServer(task));
     }
   };
+  */
 
   return (
     <Row
